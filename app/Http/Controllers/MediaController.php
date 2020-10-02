@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Media;
 use Illuminate\Http\Request;
+use App\Http\Requests\MediaStoreRequest;
 
 class MediaController extends Controller
 {
@@ -34,7 +35,7 @@ class MediaController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(MediaStoreRequest $request)
     {
         if ($request->hasFile('data') && $request->file('data')->isValid()) {
             $file = $request->file('data');
