@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MediaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
-    return view('dashboard');
-})->name('dashboard');
+Route::middleware(['auth:sanctum', 'verified'])
+    ->resource('media', MediaController::class, [
+        'except' => ['destroy', 'show']
+    ]);
+Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
+Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+    

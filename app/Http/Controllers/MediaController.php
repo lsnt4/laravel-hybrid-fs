@@ -14,7 +14,8 @@ class MediaController extends Controller
      */
     public function index()
     {
-        //
+        $media = Media::orderBy('id', 'desc')->paginate(10);
+        return view('media')->with('media', $media);
     }
 
     /**
@@ -24,7 +25,7 @@ class MediaController extends Controller
      */
     public function create()
     {
-        //
+        return view('media-create');
     }
 
     /**
@@ -35,7 +36,17 @@ class MediaController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        if ($request->hasFile('data') && $request->file('data')->isValid()) {
+            $file = $request->file('data');
+
+            $item = new Media();
+            $item->name = $request->input('name');
+            $item->size = $file->getSize();
+            $item->data = file_get_contents($file->getRealPath());
+            $status = $item->save();
+        }
+
+        return redirect('media');
     }
 
     /**
@@ -46,30 +57,7 @@ class MediaController extends Controller
      */
     public function show(Media $media)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Media  $media
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Media $media)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Media  $media
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Media $media)
-    {
-        //
+        return view('media-show')->with('item', $media);
     }
 
     /**
@@ -80,6 +68,8 @@ class MediaController extends Controller
      */
     public function destroy(Media $media)
     {
-        //
+        $media->delete();
+
+        return redirect('media');
     }
 }
