@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Media;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\MediaStoreRequest;
 
 class MediaController extends Controller
@@ -15,8 +16,11 @@ class MediaController extends Controller
      */
     public function index()
     {
-        $media = Media::orderBy('id', 'desc')->paginate(10);
-        return view('media')->with('media', $media);
+        $cachedMedia = Cache::rememberForever('data-all', function () {
+            return Media::orderBy('id', 'desc')->get();
+        });
+
+        return view('media')->with('media', $cachedMedia);
     }
 
     /**
@@ -38,13 +42,19 @@ class MediaController extends Controller
     public function store(MediaStoreRequest $request)
     {
         if ($request->hasFile('data') && $request->file('data')->isValid()) {
+
             $file = $request->file('data');
+            
+            $data = $file->getRealPath();
 
             $item = new Media();
             $item->name = $request->input('name');
             $item->size = $file->getSize();
-            $item->data = file_get_contents($file->getRealPath());
-            $status = $item->save();
+            $item->data = file_get_contents($data);
+            $item->save();
+
+            Cache::put('data-'.$item->id, $item, 60);
+            Cache::forget('data-all');
         }
 
         return redirect('media');
@@ -56,9 +66,13 @@ class MediaController extends Controller
      * @param  \App\Models\Media  $media
      * @return \Illuminate\Http\Response
      */
-    public function show(Media $media)
+    public function show($id)
     {
-        return view('media-show')->with('item', $media);
+        $cachedMedia = Cache::remember('data-'.$id, 60, function () use ($id) {
+            return Media::find($id);
+        });
+
+        return view('media-show')->with('item', $cachedMedia);
     }
 
     /**
@@ -69,6 +83,9 @@ class MediaController extends Controller
      */
     public function destroy(Media $media)
     {
+        Cache::forget('data-'.$media->id);
+        Cache::forget('data-all');
+
         $media->delete();
 
         return redirect('media');
